@@ -14,7 +14,7 @@
     </style>
 </head><body>
 
-<h2>IndoOngkir — Invoice Pesanan</h2>
+<h2>CikopakOngkir — Invoice Pesanan</h2>
 <p class="sub">No. Order #{{ $order->id }} | {{ $order->created_at->format('d M Y') }}</p>
 
 <div class="info">

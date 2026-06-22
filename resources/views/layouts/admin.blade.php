@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin · @yield('title', 'Dashboard') — IndoOngkir</title>
+    <title>Admin · @yield('title', 'Dashboard') — CikopakOngkir</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -44,7 +44,7 @@
 <body>
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <a href="{{ route('home') }}"><i class="ti ti-package"></i>IndoOngkir</a>
+        <a href="{{ route('home') }}"><i class="ti ti-package"></i>CikopakOngkir</a>
         <p>Panel Admin</p>
     </div>
     <nav class="sidebar-nav">

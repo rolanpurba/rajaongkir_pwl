@@ -3,13 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndoOngkir - @yield('title', 'Toko Online')</title>
+    <title>CikopakOngkir - @yield('title', 'Toko Online')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: #f1f5f9; min-height: 100vh; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
         /* Navbar */
         .navbar {
@@ -97,18 +104,20 @@
             gap: 8px;
         }
 
-        /* Main content */
+        /* Main content — flex:1 agar otomatis isi ruang kosong */
         .main-content {
+            flex: 1;
             max-width: 1200px;
+            width: 100%;
             margin: 0 auto;
-            padding: 32px 40px 60px;
+            padding: 32px 40px 32px;
         }
 
-        /* Footer */
+        /* Footer — selalu di bawah otomatis */
         .site-footer {
             background: #0f2544;
             padding: 24px 40px;
-            margin-top: 48px;
+            margin-top: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -123,7 +132,7 @@
 <nav class="navbar">
     <a href="{{ route('home') }}" class="navbar-brand">
         <i class="ti ti-package"></i>
-        IndoOngkir
+        CikopakOngkir
     </a>
     <div class="navbar-links">
         @auth
@@ -181,8 +190,8 @@
 </div>
 
 <footer class="site-footer">
-    <div class="brand"><i class="ti ti-package"></i> IndoOngkir</div>
-    <p>Toko Online UMKM · Ongkir Real-Time </p>
+    <div class="brand"><i class="ti ti-package"></i> CikopakOngkir</div>
+    <p>Toko Online UMKM · Ongkir Real-Time</p>
 </footer>
 
 @stack('scripts')

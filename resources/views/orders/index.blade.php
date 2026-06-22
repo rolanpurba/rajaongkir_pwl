@@ -21,11 +21,11 @@
         .order-info p i{font-size:14px;color:#94a3b8}
         .order-price{font-size:18px;font-weight:700;color:#0f2544;white-space:nowrap}
         .order-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
-        .btn-detail{font-size:12.5px;color:#0f2544;border:1px solid #c7d2e0;padding:6px 13px;border-radius:7px;text-decoration:none;transition:all .15s}
+        .btn-detail{font-size:12.5px;color:#0f2544;border:1px solid #c7d2e0;padding:6px 13px;border-radius:6px;text-decoration:none;transition:all .15s}
         .btn-detail:hover{background:#f1f5f9}
-        .btn-invoice{font-size:12.5px;color:#16a34a;border:1px solid #bbf7d0;padding:6px 13px;border-radius:7px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+        .btn-invoice{font-size:12.5px;color:#16a34a;border:1px solid #bbf7d0;padding:6px 13px;border-radius:6px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
         .btn-invoice:hover{background:#f0fdf4}
-        .btn-hapus{font-size:12.5px;color:#dc2626;border:1px solid #fecaca;padding:6px 13px;border-radius:7px;background:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+        .btn-hapus{font-size:12.5px;color:#dc2626;border:1px solid #fecaca;padding:6px 13px;border-radius:6px;background:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
         .btn-hapus:hover{background:#fef2f2}
         .empty-state{text-align:center;padding:72px 0;color:#94a3b8}
         .empty-state i{font-size:60px;display:block;margin-bottom:14px;color:#cbd5e1}
