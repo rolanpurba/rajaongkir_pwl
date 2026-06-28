@@ -29,9 +29,8 @@ return [
     ],
 
     'rajaongkir' => [
-        'key'      => env('RAJAONGKIR_API_KEY'),
-        'origin'   => env('RAJAONGKIR_ORIGIN',),
-        'base_url' => 'https://api.rajaongkir.com/starter', // <-- Tambah baris ini
+        'key'    => env('RAJAONGKIR_API_KEY'),
+        'origin' => env('RAJAONGKIR_ORIGIN_ID'),
     ],
 
     'slack' => [

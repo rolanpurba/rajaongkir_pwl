@@ -11,8 +11,6 @@
         .form-group label{display:block;font-size:12.5px;font-weight:500;color:#374151;margin-bottom:5px}
         .form-group input,.form-group textarea,.form-group select{width:100%;border:1px solid #e2e8f0;border-radius:7px;padding:8px 12px;font-size:13.5px;color:#1e293b;outline:none;transition:border-color .15s;background:#fff}
         .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#0f2544;box-shadow:0 0 0 3px rgba(15,37,68,0.06)}
-        .form-group select:disabled{background:#f8fafc;color:#94a3b8}
-        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
         .kurir-select{display:flex;gap:10px;flex-wrap:wrap}
         .kurir-btn{border:1px solid #e2e8f0;border-radius:8px;padding:8px 16px;font-size:13px;color:#475569;cursor:pointer;transition:all .15s;background:#fff;display:flex;align-items:center;gap:6px}
         .kurir-btn:hover{border-color:#0f2544;color:#0f2544}
@@ -46,6 +44,14 @@
         .btn-order:hover:not(:disabled){background:#1e3a5f}
         .btn-order:disabled{opacity:.4;cursor:not-allowed}
         .btn-order-note{font-size:12px;color:#94a3b8;text-align:center;margin-top:8px}
+
+        /* Autocomplete */
+        .autocomplete-wrapper{position:relative}
+        .autocomplete-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:7px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:100;max-height:220px;overflow-y:auto;display:none}
+        .autocomplete-item{padding:10px 12px;font-size:13px;color:#374151;cursor:pointer;border-bottom:1px solid #f1f5f9}
+        .autocomplete-item:last-child{border-bottom:none}
+        .autocomplete-item:hover{background:#f8fafc;color:#0f2544}
+        .autocomplete-item small{display:block;font-size:11px;color:#94a3b8;margin-top:2px}
     </style>
 @endpush
 
@@ -56,13 +62,12 @@
 
     <form method="POST" action="{{ route('orders.store') }}" id="checkout-form">
         @csrf
-        <input type="hidden" name="courier_service" id="input_courier_service">
-        <input type="hidden" name="shipping_cost"   id="input_shipping_cost">
-        <input type="hidden" name="total_weight"    id="total_weight" value="{{ $totalWeight }}">
-        {{-- Nama provinsi & kota teks untuk disimpan ke DB --}}
-        <input type="hidden" name="province" id="input_province_name">
-        <input type="hidden" name="city"     id="input_city_name">
-        <input type="hidden" name="city_id"  id="city_id">
+        <input type="hidden" name="courier_service"  id="input_courier_service">
+        <input type="hidden" name="shipping_cost"    id="input_shipping_cost">
+        <input type="hidden" name="total_weight"     id="total_weight" value="{{ $totalWeight }}">
+        <input type="hidden" name="destination_id"   id="input_destination_id">
+        <input type="hidden" name="province"         id="input_province_name">
+        <input type="hidden" name="city"             id="input_city_name">
 
         <div class="checkout-layout">
             <div>
@@ -81,31 +86,13 @@
                         <label>Alamat Lengkap *</label>
                         <textarea name="address" rows="3" placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan..." required>{{ old('address') }}</textarea>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group" style="margin-bottom:0">
-                            <label>Provinsi *</label>
-                            {{--
-                                API V2: response provinsi pakai key 'id' dan 'name'
-                                (bukan 'province_id' dan 'province' seperti API lama)
-                                Kita cek dua kemungkinan dengan null coalescing
-                            --}}
-                            <select id="province" required>
-                                <option value="">Pilih Provinsi</option>
-                                @foreach($provinces as $prov)
-                                    <option
-                                        value="{{ $prov['id'] ?? $prov['province_id'] ?? '' }}"
-                                        data-name="{{ $prov['name'] ?? $prov['province'] ?? '' }}">
-                                        {{ $prov['name'] ?? $prov['province'] ?? '' }}
-                                    </option>
-                                @endforeach
-                            </select>
+                    <div class="form-group">
+                        <label>Cari Kecamatan / Kota *</label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="destination-search" placeholder="Ketik nama kecamatan atau kota..." autocomplete="off">
+                            <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
                         </div>
-                        <div class="form-group" style="margin-bottom:0">
-                            <label>Kota/Kabupaten *</label>
-                            <select id="city" disabled required>
-                                <option value="">Pilih Kota</option>
-                            </select>
-                        </div>
+                        <small style="color:#94a3b8;font-size:11.5px;margin-top:4px;display:block">Contoh: Purwakarta, Bandung, Surabaya</small>
                     </div>
                 </div>
 
@@ -193,6 +180,66 @@
     <script>
         const subtotal = {{ $totalPrice }};
         let selectedKurir = '';
+        let selectedDestinationId = null;
+        let searchTimeout = null;
+
+        document.getElementById('destination-search').addEventListener('input', function() {
+            const keyword = this.value.trim();
+            clearTimeout(searchTimeout);
+            if (keyword.length < 3) {
+                document.getElementById('autocomplete-dropdown').style.display = 'none';
+                return;
+            }
+            searchTimeout = setTimeout(() => searchDestination(keyword), 400);
+        });
+
+        async function searchDestination(keyword) {
+            try {
+                const res  = await fetch(`/checkout/search-destination?search=${encodeURIComponent(keyword)}`);
+                const data = await res.json();
+                renderDropdown(data);
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function renderDropdown(results) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            if (!results || results.length === 0) {
+                dropdown.innerHTML = '<div class="autocomplete-item">Tidak ditemukan</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+            dropdown.innerHTML = results.map(r => `
+            <div class="autocomplete-item"
+                data-id="${r.id}"
+                data-label="${r.label}"
+                data-province="${r.province_name}"
+                data-city="${r.city_name}"
+                onclick="pilihDestinasi(this)">
+                ${r.label}
+                <small>${r.province_name}</small>
+            </div>
+        `).join('');
+            dropdown.style.display = 'block';
+        }
+
+        function pilihDestinasi(el) {
+            selectedDestinationId = el.dataset.id;
+            document.getElementById('destination-search').value   = el.dataset.label;
+            document.getElementById('input_destination_id').value = el.dataset.id;
+            document.getElementById('input_province_name').value  = el.dataset.province;
+            document.getElementById('input_city_name').value      = el.dataset.city;
+            document.getElementById('autocomplete-dropdown').style.display = 'none';
+            resetOngkir();
+            hitungOngkir();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.autocomplete-wrapper')) {
+                document.getElementById('autocomplete-dropdown').style.display = 'none';
+            }
+        });
 
         function pilihKurir(el) {
             document.querySelectorAll('.kurir-btn').forEach(b => b.classList.remove('active'));
@@ -202,87 +249,38 @@
             hitungOngkir();
         }
 
-        // ── Provinsi berubah → load kota via AJAX ──
-        document.getElementById('province').addEventListener('change', async function() {
-            const provId   = this.value;
-            const provName = this.options[this.selectedIndex].dataset.name;
-            const cityEl   = document.getElementById('city');
-
-            cityEl.innerHTML = '<option value="">Memuat kota...</option>';
-            cityEl.disabled  = true;
-            resetOngkir();
-
-            // Simpan nama provinsi ke hidden input
-            document.getElementById('input_province_name').value = provName || provId;
-
-            try {
-                const res    = await fetch(`/checkout/cities?province_id=${provId}`);
-                const cities = await res.json();
-
-                cityEl.innerHTML = '<option value="">Pilih Kota</option>';
-                cities.forEach(c => {
-                    // API V2: key 'id' dan 'name' — fallback ke key lama jika pakai hardcode
-                    const cityId   = c.id   ?? c.city_id   ?? '';
-                    const cityName = c.name ?? c.city_name ?? '';
-                    const cityType = c.type ?? '';
-                    cityEl.innerHTML += `<option value="${cityId}" data-name="${cityName}">${cityType} ${cityName}`.trim() + `</option>`;
-                });
-                cityEl.disabled = false;
-            } catch(e) {
-                cityEl.innerHTML = '<option value="">Gagal memuat kota</option>';
-            }
-        });
-
-        // ── Kota berubah → simpan ke hidden, hitung ongkir ──
-        document.getElementById('city').addEventListener('change', function() {
-            const opt      = this.options[this.selectedIndex];
-            const cityId   = this.value;
-            const cityName = opt.dataset.name || opt.text.trim();
-
-            document.getElementById('city_id').value          = cityId;
-            document.getElementById('input_city_name').value  = cityName;
-            hitungOngkir();
-        });
-
-        // ── Hitung ongkir via AJAX ──
         async function hitungOngkir() {
-            const cityId = document.getElementById('city_id').value;
-            if (!cityId || !selectedKurir) return;
+            if (!selectedDestinationId || !selectedKurir) return;
             const weight = document.getElementById('total_weight').value;
 
             document.getElementById('ongkir-loading').style.display   = 'flex';
             document.getElementById('ongkir-container').style.display = 'none';
             document.getElementById('ongkir-error').style.display     = 'none';
-            resetOngkir();
 
             try {
-                const res  = await fetch(`/checkout/cost?city_id=${cityId}&courier=${selectedKurir}&weight=${weight}`);
+                const res  = await fetch(`/checkout/cost?destination_id=${selectedDestinationId}&courier=${selectedKurir}&weight=${weight}`);
                 const data = await res.json();
 
-                // Tangani jika API error (misal key 'error' ada di response)
-                if (!Array.isArray(data) || data.length === 0) {
-                    throw new Error('Data ongkir kosong atau error');
-                }
+                if (!Array.isArray(data) || data.length === 0) throw new Error('kosong');
 
                 const tbody = document.getElementById('ongkir-list');
                 tbody.innerHTML = data.map(c => {
-                    // API V2 mungkin pakai struktur berbeda — handle dua kemungkinan
-                    const svc   = c.service     ?? c.code        ?? '-';
-                    const desc  = c.description ?? c.name        ?? '-';
-                    const price = c.cost?.[0]?.value ?? c.price  ?? 0;
-                    const etd   = c.cost?.[0]?.etd   ?? c.etd    ?? '-';
+                    const svc   = c.service     ?? c.code  ?? '-';
+                    const desc  = c.description ?? c.name  ?? '-';
+                    const price = c.cost        ?? 0;
+                    const etd   = c.etd         ?? '-';
                     return `
-            <tr>
-                <td><span class="ongkir-service">${selectedKurir.toUpperCase()} ${svc}</span></td>
-                <td style="font-size:12px;color:#64748b">${desc}</td>
-                <td><span class="ongkir-price">Rp ${price.toLocaleString('id-ID')}</span></td>
-                <td><span class="ongkir-etd">${etd} hari</span></td>
-                <td style="text-align:center">
-                    <input type="radio" name="selected_service_radio"
-                        value="${svc}:${price}"
-                        onchange="piliService('${svc}', ${price})">
-                </td>
-            </tr>`;
+                <tr>
+                    <td><span class="ongkir-service">${selectedKurir.toUpperCase()} ${svc}</span></td>
+                    <td style="font-size:12px;color:#64748b">${desc}</td>
+                    <td><span class="ongkir-price">Rp ${price.toLocaleString('id-ID')}</span></td>
+                    <td><span class="ongkir-etd">${etd} hari</span></td>
+                    <td style="text-align:center">
+                        <input type="radio" name="selected_service_radio"
+                            value="${svc}:${price}"
+                            onchange="pilihService('${svc}', ${price})">
+                    </td>
+                </tr>`;
                 }).join('');
 
                 document.getElementById('ongkir-loading').style.display   = 'none';
@@ -293,8 +291,7 @@
             }
         }
 
-        // ── User pilih layanan ongkir ──
-        function piliService(service, cost) {
+        function pilihService(service, cost) {
             document.getElementById('input_courier_service').value = service;
             document.getElementById('input_shipping_cost').value   = cost;
             document.getElementById('display-ongkir').textContent  = `Rp ${cost.toLocaleString('id-ID')}`;
@@ -312,6 +309,8 @@
             document.getElementById('display-total').textContent    = '—';
             document.getElementById('btn-order').disabled           = true;
             document.querySelector('.btn-order-note').style.display = 'block';
+            document.getElementById('ongkir-container').style.display = 'none';
+            document.getElementById('ongkir-error').style.display     = 'none';
         }
     </script>
 @endpush

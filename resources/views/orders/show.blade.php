@@ -32,6 +32,20 @@
         .sum-total .val{font-size:20px;font-weight:700;color:#0f2544}
         .btn-invoice{display:block;width:100%;background:#0f2544;color:#fff;text-align:center;font-size:13.5px;font-weight:500;padding:11px;border-radius:8px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:16px}
         .btn-invoice:hover{background:#1e3a5f}
+        .bank-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:16px;margin-bottom:16px}
+        .bank-box .bank-title{font-size:13px;font-weight:600;color:#0369a1;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+        .bank-row{display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0}
+        .bank-row .lbl{color:#64748b}
+        .bank-row .val{font-weight:600;color:#0f172a}
+        .upload-area{border:2px dashed #e2e8f0;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;margin-bottom:12px}
+        .upload-area:hover{border-color:#0f2544}
+        .upload-area i{font-size:32px;color:#94a3b8;display:block;margin-bottom:8px}
+        .upload-area p{font-size:13px;color:#64748b;margin:0}
+        .btn-upload{display:block;width:100%;background:#16a34a;color:#fff;text-align:center;font-size:13.5px;font-weight:500;padding:11px;border-radius:8px;border:none;cursor:pointer;transition:background .15s}
+        .btn-upload:hover{background:#15803d}
+        .proof-img{width:100%;border-radius:8px;border:1px solid #e8edf3;margin-bottom:12px}
+        .alert-success{background:#dcfce7;color:#15803d;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+        .alert-error{background:#fee2e2;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:7px}
     </style>
 @endpush
 
@@ -50,6 +64,13 @@
             <span class="badge badge-yellow"><i class="ti ti-clock"></i> Menunggu pembayaran</span>
         @endif
     </div>
+
+    @if(session('success'))
+        <div class="alert-success"><i class="ti ti-circle-check"></i> {{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert-error"><i class="ti ti-alert-circle"></i> {{ session('error') }}</div>
+    @endif
 
     <div class="detail-layout">
         <div>
@@ -78,6 +99,48 @@
                 <div class="info-row"><span class="lbl">Alamat</span><span class="val">{{ $order->address }}</span></div>
                 <div class="info-row"><span class="lbl">Kota</span><span class="val">{{ $order->city }}, {{ $order->province }}</span></div>
             </div>
+
+            {{-- Form Upload Bukti Bayar --}}
+            @if($order->status === 'belum_bayar')
+                <div class="det-card">
+                    <h3><i class="ti ti-credit-card"></i>Pembayaran</h3>
+                    <div class="bank-box">
+                        <div class="bank-title"><i class="ti ti-building-bank"></i> Informasi Rekening</div>
+                        <div class="bank-row"><span class="lbl">Bank</span><span class="val">BCA</span></div>
+                        <div class="bank-row"><span class="lbl">No. Rekening</span><span class="val">1234567890</span></div>
+                        <div class="bank-row"><span class="lbl">Atas Nama</span><span class="val">Roland Purba</span></div>
+                        <div class="bank-row"><span class="lbl">Jumlah Transfer</span><span class="val" style="color:#0f2544">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span></div>
+                    </div>
+                    <form method="POST" action="{{ route('orders.payment', $order) }}" enctype="multipart/form-data">
+                        @csrf
+                        <label class="upload-area" for="payment_proof">
+                            <i class="ti ti-upload"></i>
+                            <p>Klik untuk upload bukti transfer</p>
+                            <p style="font-size:11.5px;color:#94a3b8;margin-top:4px">JPG, JPEG, PNG — Maks 2MB</p>
+                        </label>
+                        <input type="file" id="payment_proof" name="payment_proof" accept="image/*" style="display:none" onchange="previewImage(this)">
+                        <img id="preview" src="" style="display:none" class="proof-img">
+                        @error('payment_proof')
+                        <div style="color:#dc2626;font-size:12.5px;margin-bottom:8px">{{ $message }}</div>
+                        @enderror
+                        <button type="submit" class="btn-upload">
+                            <i class="ti ti-upload" style="font-size:14px"></i> Upload Bukti Bayar
+                        </button>
+                    </form>
+                </div>
+
+                {{-- Tampilkan bukti bayar setelah dikirim --}}
+            @elseif($order->status === 'dikirim' && $order->payment_proof)
+                <div class="det-card">
+                    <h3><i class="ti ti-credit-card"></i>Bukti Pembayaran</h3>
+                    <img src="{{ asset('storage/'.$order->payment_proof) }}" class="proof-img" alt="Bukti Bayar">
+                    @if($order->paid_at)
+                        <div style="font-size:12.5px;color:#94a3b8">
+                            Dibayar: {{ $order->paid_at->format('d M Y, H:i') }}
+                        </div>
+                    @endif
+                </div>
+            @endif
         </div>
 
         <div>
@@ -98,3 +161,19 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('preview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+@endpush

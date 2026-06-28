@@ -10,6 +10,11 @@ class Order extends Model
         'user_id', 'recipient_name', 'phone', 'address',
         'province', 'city', 'city_id', 'courier', 'courier_service',
         'shipping_cost', 'total_price', 'total_weight', 'status',
+        'payment_proof', 'paid_at',
+    ];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
     ];
 
     public function user()  { return $this->belongsTo(User::class); }

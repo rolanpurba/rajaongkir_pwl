@@ -7,39 +7,36 @@ use Illuminate\Support\Facades\Http;
 class RajaOngkirService
 {
     protected $key;
-    protected $base = 'https://api.rajaongkir.com/starter';
+    protected $base = 'https://rajaongkir.komerce.id/api/v1';
 
     public function __construct()
     {
         $this->key = config('services.rajaongkir.key');
     }
 
-    public function getProvinces()
+    public function searchDestination($search)
     {
         $res = Http::withHeaders(['key' => $this->key])
             ->timeout(15)
-            ->get($this->base . '/province');
-        return $res->json()['rajaongkir']['results'];
+            ->withoutVerifying()
+            ->get($this->base . '/destination/domestic-destination', [
+                'search' => $search
+            ]);
+        return $res->json()['data'] ?? [];
     }
 
-    public function getCities($provinceId)
+    public function getCost($originId, $destinationId, $weight, $courier)
     {
         $res = Http::withHeaders(['key' => $this->key])
             ->timeout(15)
-            ->get($this->base . '/city', ['province' => $provinceId]);
-        return $res->json()['rajaongkir']['results'];
-    }
-
-    public function getCost($destination, $weight, $courier)
-    {
-        $res = Http::withHeaders(['key' => $this->key])
-            ->timeout(15)
-            ->post($this->base . '/cost', [
-                'origin'      => config('services.rajaongkir.origin'),
-                'destination' => $destination,
+            ->withoutVerifying()
+            ->asForm()  // tambah ini — kirim sebagai form data
+            ->post($this->base . '/calculate/domestic-cost', [
+                'origin'      => $originId,
+                'destination' => $destinationId,
                 'weight'      => $weight,
                 'courier'     => $courier,
             ]);
-        return $res->json()['rajaongkir']['results'][0]['costs'];
+        return $res->json()['data'] ?? [];
     }
 }

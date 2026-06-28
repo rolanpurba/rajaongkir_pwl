@@ -113,8 +113,8 @@
                                 @csrf @method('PATCH')
                                 <select name="status">
                                     <option value="belum_bayar" {{ $order->status==='belum_bayar'?'selected':'' }}>Belum bayar</option>
-                                    <option value="dikirim"    {{ $order->status==='dikirim'?'selected':'' }}>Dikirim</option>
-                                    <option value="selesai"    {{ $order->status==='selesai'?'selected':'' }}>Selesai</option>
+                                    <option value="dikirim"     {{ $order->status==='dikirim'?'selected':'' }}>Dikirim</option>
+                                    <option value="selesai"     {{ $order->status==='selesai'?'selected':'' }}>Selesai</option>
                                 </select>
                                 <button type="submit" class="btn-save">Simpan</button>
                             </form>

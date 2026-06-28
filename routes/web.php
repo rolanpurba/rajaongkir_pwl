@@ -18,7 +18,7 @@ Route::middleware('auth')->group(function () {
 
     // Checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::get('/checkout/cities', [CheckoutController::class, 'getCities'])->name('checkout.cities');
+    Route::get('/checkout/search-destination', [CheckoutController::class, 'searchDestination'])->name('checkout.searchDestination');
     Route::get('/checkout/cost', [CheckoutController::class, 'getCost'])->name('checkout.cost');
 
     // Orders
@@ -27,6 +27,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+    Route::post('/orders/{order}/payment', [OrderController::class, 'uploadPayment'])->name('orders.payment');
+    Route::post('/orders/{order}/confirm', [OrderController::class, 'confirmPayment'])->name('orders.confirm');
 });
 
 // Admin routes
@@ -34,6 +36,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::resource('products', ProductController::class);
     Route::get('orders', [OrderController::class, 'adminIndex'])->name('orders.index');
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+    Route::post('orders/{order}/confirm', [OrderController::class, 'confirmPayment'])->name('orders.confirm');
 });
 
 require __DIR__.'/auth.php';
