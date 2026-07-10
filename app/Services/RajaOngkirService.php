@@ -30,7 +30,7 @@ class RajaOngkirService
         $res = Http::withHeaders(['key' => $this->key])
             ->timeout(15)
             ->withoutVerifying()
-            ->asForm()  // tambah ini — kirim sebagai form data
+            ->asForm()
             ->post($this->base . '/calculate/domestic-cost', [
                 'origin'      => $originId,
                 'destination' => $destinationId,

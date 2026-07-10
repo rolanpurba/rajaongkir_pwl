@@ -44,7 +44,7 @@
 <body>
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <a href="{{ route('home') }}"><i class="ti ti-package"></i>CikopakOngkir</a>
+        <a href="{{ route('home') }}"><i class="ti ti-package"></i>CikopakGG</a>
         <p>Panel Admin</p>
     </div>
     <nav class="sidebar-nav">
